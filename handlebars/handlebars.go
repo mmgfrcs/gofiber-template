@@ -78,6 +78,7 @@ func (e *Engine) Layout(key string) *Engine {
 func (e *Engine) AddFunc(name string, fn interface{}) *Engine {
 	e.mutex.Lock()
 	e.funcmap[name] = fn
+	raymond.RegisterHelper(name, fn)
 	e.mutex.Unlock()
 	return e
 }
@@ -109,7 +110,6 @@ func (e *Engine) Load() (err error) {
 	defer e.mutex.Unlock()
 	// Set template settings
 	e.Templates = make(map[string]*raymond.Template)
-	raymond.RegisterHelpers(e.funcmap)
 	// Loop trough each directory and register template files
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		// Return error if exist

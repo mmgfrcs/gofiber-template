@@ -202,7 +202,7 @@ func main() {
 }
 
 ```
-#### fileb0x
+#### filebox
 Read documentation: https://github.com/UnnoTed/fileb0x
 
 ```go

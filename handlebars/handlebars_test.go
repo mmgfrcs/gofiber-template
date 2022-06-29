@@ -2,6 +2,7 @@ package handlebars
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -125,4 +126,68 @@ func Test_Reload(t *testing.T) {
 	if expect != result {
 		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
 	}
+}
+
+func Test_Func(t *testing.T) {
+	engine := New("./views", ".hbs")
+	if err := engine.Load(); err != nil {
+		t.Fatalf("load: %v\n", err)
+	}
+	engine.AddFunc("add", func(arg1 int, arg2 int) string {
+		return fmt.Sprintf("%d", arg1+arg2)
+	})
+	// Single
+	var buf bytes.Buffer
+	engine.Render(&buf, "func", map[string]interface{}{
+		"Title": "Hello, World!",
+	})
+	expect := `2`
+	result := trim(buf.String())
+	if expect != result {
+		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
+	}
+}
+
+func Test_Func_Reload(t *testing.T) {
+	engine := New("./views", ".hbs")
+	engine.Reload(true)
+	if err := engine.Load(); err != nil {
+		t.Fatalf("load: %v\n", err)
+	}
+	engine.AddFunc("add2", func(arg1 int, arg2 int) string {
+		return fmt.Sprintf("%d", arg1+arg2)
+	})
+	// Load it again after adding function, simulating reload
+	if err := engine.Load(); err != nil {
+		t.Fatalf("load: %v\n", err)
+	}
+	//Test adding more function
+	engine.AddFunc("add3", func(arg1 int, arg2 int) string {
+		return fmt.Sprintf("%d", arg1+arg2)
+	})
+	var buf bytes.Buffer
+	engine.Render(&buf, "funcrel", nil)
+	expect := `2`
+	result := trim(buf.String())
+	if expect != result {
+		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
+	}
+}
+
+func Test_Func_Double_NotAllowed(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("AddFunc accepts 2 functionsa of the same name, this is an error!")
+		}
+	}()
+
+	engine := New("./views", ".hbs")
+
+	//Try adding 2 functions of the same name
+	engine.AddFunc("add4", func(arg string) string {
+		return arg
+	})
+	engine.AddFunc("add4", func(arg string) string {
+		return arg
+	})
 }
